@@ -14,5 +14,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+# cloudflare
+.wrangler/
+deploy/cloudflare/.wrangler/
+
 # macOS
 .DS_Store

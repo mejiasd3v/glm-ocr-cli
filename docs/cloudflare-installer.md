@@ -11,7 +11,7 @@ The Worker resolves the latest GitHub release tag and returns a tiny bootstrap s
 ## Files
 
 - `deploy/cloudflare/worker.js`
-- `deploy/cloudflare/wrangler.toml.example`
+- `deploy/cloudflare/wrangler.toml`
 
 ## Behavior
 
@@ -39,23 +39,17 @@ This installs a specific tag.
 npm install -g wrangler
 ```
 
-2. Copy the example config:
+2. Log in:
 
 ```bash
 cd deploy/cloudflare
-cp wrangler.toml.example wrangler.toml
+npx wrangler login
 ```
 
-3. Log in:
+3. Deploy:
 
 ```bash
-wrangler login
-```
-
-4. Deploy:
-
-```bash
-wrangler deploy
+npx wrangler deploy
 ```
 
 5. In Cloudflare, attach a custom route or domain such as:

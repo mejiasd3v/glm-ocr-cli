@@ -1,0 +1,8 @@
+name = "glm-ocr-cli-installer"
+main = "./worker.js"
+compatibility_date = "2026-03-15"
+workers_dev = true
+
+routes = [
+  { pattern = "glm-ocr-cli.mejiasdev.com/install.sh", zone_name = "mejiasdev.com" }
+]
