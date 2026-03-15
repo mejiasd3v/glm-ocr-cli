@@ -59,10 +59,10 @@ fi
 
 mkdir -p "$(dirname "$CLI_LINK")" "$(dirname "$SKILL_LINK")"
 backup_if_needed "$CLI_LINK" "$INSTALL_DIR/bin/ocr"
-backup_if_needed "$SKILL_LINK" "$INSTALL_DIR"
+backup_if_needed "$SKILL_LINK" "$INSTALL_DIR/skills/ocr"
 
 ln -s "$INSTALL_DIR/bin/ocr" "$CLI_LINK"
-ln -s "$INSTALL_DIR" "$SKILL_LINK"
+ln -s "$INSTALL_DIR/skills/ocr" "$SKILL_LINK"
 chmod +x "$INSTALL_DIR/bin/ocr" "$INSTALL_DIR/install.sh"
 
 echo "[glm-ocr-cli] installed"
