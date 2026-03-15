@@ -92,12 +92,31 @@ Generated local-only directories are ignored:
 benchmarks/
 ```
 
-## Install for local use
+## Install
+
+### One-line installer
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mejiasd3v/glm-ocr-cli/main/install.sh | bash
+```
+
+This will:
+- clone the repo to `~/.local/share/glm-ocr-cli`
+- symlink the CLI to `~/.local/bin/ocr`
+- symlink the skill to `~/.agents/skills/ocr`
+
+Then run:
+
+```bash
+ocr doctor
+```
+
+### Manual install
 
 Clone the repo somewhere, for example:
 
 ```bash
-git clone <repo-url> ~/Developer/oss/glm-ocr-cli
+git clone https://github.com/mejiasd3v/glm-ocr-cli.git ~/Developer/oss/glm-ocr-cli
 ```
 
 Make the Pi skill available:
