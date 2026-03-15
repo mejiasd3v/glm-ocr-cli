@@ -1,0 +1,18 @@
+# local environments
+.venv-mlx/
+.venv-sdk/
+
+# runtime state
+.runtime/
+output/
+
+# local benchmark artifacts
+benchmarks/
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# macOS
+.DS_Store

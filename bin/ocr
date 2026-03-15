@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$SOURCE" ]]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+BIN_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+SKILL_DIR="$(cd "$BIN_DIR/.." && pwd)"
+
+source "$SKILL_DIR/scripts/common.sh"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ocr <file-or-dir> [glmocr flags...]    Parse a PDF/image/directory
+  ocr parse <file-or-dir> [glmocr flags...]
+  ocr install                            Install local environments
+  ocr server                             Start a persistent background server (optional)
+  ocr status                             Show server/config status
+  ocr stop                               Stop background server
+  ocr logs                               Tail server logs
+  ocr doctor [sample-file]               Run a local self-test
+  ocr benchmark [--models ...]           Compare bf16 vs quantized models
+
+Examples:
+  ocr ./invoice.pdf --stdout
+  ocr parse ./receipt.jpg --stdout --no-save
+  ocr server   # optional; normal parse auto-starts and auto-stops the server
+  ocr status
+  ocr doctor
+  ocr benchmark --models bf16 8bit 4bit
+EOF
+}
+
+if [[ $# -eq 0 ]]; then
+  usage
+  exit 1
+fi
+
+case "$1" in
+  install)
+    shift
+    exec bash "$SKILL_DIR/scripts/setup.sh" "$@"
+    ;;
+  server|start-server)
+    shift
+    exec bash "$SKILL_DIR/scripts/start_server.sh" "$@"
+    ;;
+  status)
+    shift
+    ocr_print_status
+    ;;
+  stop)
+    shift
+    ocr_stop_server
+    ;;
+  logs)
+    shift
+    ocr_ensure_runtime_dir
+    touch "$OCR_SERVER_LOG"
+    exec tail -n 100 -f "$OCR_SERVER_LOG"
+    ;;
+  doctor)
+    shift
+    exec bash "$SKILL_DIR/scripts/doctor.sh" "$@"
+    ;;
+  benchmark)
+    shift
+    ocr_ensure_setup
+    exec "$OCR_SDK_VENV/bin/python" "$SKILL_DIR/scripts/benchmark_quantization.py" "$@"
+    ;;
+  parse)
+    shift
+    exec bash "$SKILL_DIR/scripts/parse.sh" "$@"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    exec bash "$SKILL_DIR/scripts/parse.sh" "$@"
+    ;;
+esac

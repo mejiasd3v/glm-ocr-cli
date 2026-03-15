@@ -1,0 +1,9 @@
+pipeline:
+  maas:
+    enabled: false
+  ocr_api:
+    api_host: 127.0.0.1
+    api_port: 8080
+    model: mlx-community/GLM-OCR-bf16
+    api_path: /chat/completions
+    verify_ssl: false
