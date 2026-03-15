@@ -1,6 +1,6 @@
 ---
 name: ocr
-description: Extract text, tables, formulas, and structured document content from local PDFs and images using the GLM-OCR model running locally on Apple Silicon via mlx-vlm. Use when a user asks for OCR, document parsing, scanned PDF extraction, invoice/receipt/ID/document digitization, or converting screenshots and document images into Markdown/JSON.
+description: Local OCR for PDFs and images on Apple Silicon using GLM-OCR. Use for scanned PDFs, receipts, invoices, screenshots, forms, and document extraction into Markdown/JSON.
 ---
 
 # OCR
