@@ -96,8 +96,16 @@ benchmarks/
 
 ### One-line installer
 
+Install from `main` directly:
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mejiasd3v/glm-ocr-cli/main/install.sh | bash
+```
+
+Or, if you set up the Cloudflare installer endpoint described below, install the latest release via your custom domain:
+
+```bash
+curl -fsSL https://glm-ocr-cli.mejiasdev.com/install.sh | bash
 ```
 
 This will:
@@ -195,6 +203,27 @@ For each file, the parser can produce:
 - `8bit` is a lighter experimental option.
 - Layout is disabled by default because the local SDK layout path was unstable in testing.
 - Run `ocr doctor` after changes to verify the full local path.
+
+## Cloudflare custom installer
+
+To serve a stable custom-domain installer like:
+
+```bash
+curl -fsSL https://glm-ocr-cli.mejiasdev.com/install.sh | bash
+```
+
+use the included Cloudflare Worker files:
+
+- `deploy/cloudflare/worker.js`
+- `deploy/cloudflare/wrangler.toml.example`
+
+Deployment notes:
+- latest release installer docs: [`docs/cloudflare-installer.md`](./docs/cloudflare-installer.md)
+- pinned version example:
+
+```bash
+curl -fsSL 'https://glm-ocr-cli.mejiasdev.com/install.sh?version=v0.1.0' | bash
+```
 
 ## Acknowledgements
 

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_URL="${GLMOCR_REPO_URL:-https://github.com/mejiasd3v/glm-ocr-cli.git}"
-BRANCH="${GLMOCR_BRANCH:-main}"
+REF="${GLMOCR_VERSION:-${GLMOCR_BRANCH:-main}}"
 INSTALL_DIR="${GLMOCR_INSTALL_DIR:-$HOME/.local/share/glm-ocr-cli}"
 CLI_LINK="${GLMOCR_CLI_LINK:-$HOME/.local/bin/ocr}"
 SKILL_LINK="${GLMOCR_SKILL_LINK:-$HOME/.agents/skills/ocr}"
@@ -44,15 +44,17 @@ fi
 mkdir -p "$(dirname "$INSTALL_DIR")"
 if [[ -d "$INSTALL_DIR/.git" ]]; then
   echo "[glm-ocr-cli] updating existing repo in $INSTALL_DIR"
-  git -C "$INSTALL_DIR" fetch origin "$BRANCH"
-  git -C "$INSTALL_DIR" checkout "$BRANCH"
-  git -C "$INSTALL_DIR" pull --ff-only origin "$BRANCH"
+  git -C "$INSTALL_DIR" fetch --tags origin
+  git -C "$INSTALL_DIR" checkout "$REF"
+  if git -C "$INSTALL_DIR" show-ref --verify --quiet "refs/remotes/origin/$REF"; then
+    git -C "$INSTALL_DIR" pull --ff-only origin "$REF"
+  fi
 else
   if [[ -e "$INSTALL_DIR" ]]; then
     backup_if_needed "$INSTALL_DIR" "$INSTALL_DIR"
   fi
   echo "[glm-ocr-cli] cloning repo to $INSTALL_DIR"
-  git clone --branch "$BRANCH" "$REPO_URL" "$INSTALL_DIR"
+  git clone --branch "$REF" "$REPO_URL" "$INSTALL_DIR"
 fi
 
 mkdir -p "$(dirname "$CLI_LINK")" "$(dirname "$SKILL_LINK")"
@@ -64,6 +66,7 @@ ln -s "$INSTALL_DIR" "$SKILL_LINK"
 chmod +x "$INSTALL_DIR/bin/ocr" "$INSTALL_DIR/install.sh"
 
 echo "[glm-ocr-cli] installed"
+echo "[glm-ocr-cli] ref:   $REF"
 echo "[glm-ocr-cli] repo:  $INSTALL_DIR"
 echo "[glm-ocr-cli] cli:   $CLI_LINK"
 echo "[glm-ocr-cli] skill: $SKILL_LINK"
