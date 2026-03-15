@@ -21,6 +21,71 @@ ocr file.pdf --stdout
 
 Normal runs are transient: the CLI starts the local model server, parses the input, and shuts the server down automatically.
 
+## Install
+
+### One-line installer
+
+Latest release via custom domain:
+
+```bash
+curl -fsSL https://glm-ocr-cli.mejiasdev.com/install.sh | bash
+```
+
+Or install directly from GitHub `main`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mejiasd3v/glm-ocr-cli/main/install.sh | bash
+```
+
+On macOS, the installer automatically sets up required system dependencies when missing:
+- Homebrew
+- Xcode Command Line Tools
+- `git`
+- `uv`
+- `python@3.12`
+- `poppler` (`pdftoppm` for PDFs)
+
+It also:
+- clones the repo to `~/.local/share/glm-ocr-cli`
+- symlinks the CLI to `~/.local/bin/ocr`
+- symlinks the skill to `~/.agents/skills/ocr`
+- bootstraps the local OCR virtualenvs
+
+Then verify with:
+
+```bash
+ocr doctor
+```
+
+### Manual install
+
+Clone the repo somewhere, for example:
+
+```bash
+git clone https://github.com/mejiasd3v/glm-ocr-cli.git ~/Developer/oss/glm-ocr-cli
+```
+
+Make the Pi skill available:
+
+```bash
+mkdir -p ~/.agents/skills
+ln -s ~/Developer/oss/glm-ocr-cli/skills/ocr ~/.agents/skills/ocr
+```
+
+Make the CLI global:
+
+```bash
+mkdir -p ~/.local/bin
+ln -s ~/Developer/oss/glm-ocr-cli/bin/ocr ~/.local/bin/ocr
+```
+
+Ensure `~/.local/bin` is on your `PATH`, then bootstrap dependencies:
+
+```bash
+ocr install
+ocr doctor
+```
+
 ## Features
 
 - local OCR for PDFs and images
@@ -35,15 +100,9 @@ Normal runs are transient: the CLI starts the local model server, parses the inp
 ## Requirements
 
 - macOS on Apple Silicon
-- Python 3.12
-- `uv`
-- optional but recommended for PDFs: `pdftoppm` from Poppler
+- internet access for first-time dependency and model setup
 
-Install Poppler with Homebrew if needed:
-
-```bash
-brew install poppler
-```
+If you use the one-line installer on macOS, it installs the required local tooling automatically.
 
 ## Demo
 
@@ -94,62 +153,12 @@ Generated local-only directories are ignored:
 benchmarks/
 ```
 
-## Install
-
-### One-line installer
-
-Install from `main` directly:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/mejiasd3v/glm-ocr-cli/main/install.sh | bash
-```
-
-Or, if you set up the Cloudflare installer endpoint described below, install the latest release via your custom domain:
-
-```bash
-curl -fsSL https://glm-ocr-cli.mejiasdev.com/install.sh | bash
-```
-
-This will:
-- clone the repo to `~/.local/share/glm-ocr-cli`
-- symlink the CLI to `~/.local/bin/ocr`
-- symlink the skill to `~/.agents/skills/ocr`
-
-Then run:
-
-```bash
-ocr doctor
-```
-
-### Manual install
-
-Clone the repo somewhere, for example:
-
-```bash
-git clone https://github.com/mejiasd3v/glm-ocr-cli.git ~/Developer/oss/glm-ocr-cli
-```
-
-Make the Pi skill available:
-
-```bash
-mkdir -p ~/.agents/skills
-ln -s ~/Developer/oss/glm-ocr-cli/skills/ocr ~/.agents/skills/ocr
-```
-
-Make the CLI global:
-
-```bash
-mkdir -p ~/.local/bin
-ln -s ~/Developer/oss/glm-ocr-cli/bin/ocr ~/.local/bin/ocr
-```
-
-Ensure `~/.local/bin` is on your `PATH`.
-
 ## First run
 
-The first run creates two local virtualenvs and installs dependencies automatically:
+If you used the one-line installer, the local OCR environments are already bootstrapped. For a manual install, create them with:
 
 ```bash
+ocr install
 ocr doctor
 ```
 

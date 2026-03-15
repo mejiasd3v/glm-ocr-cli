@@ -14,6 +14,63 @@ need_cmd() {
   fi
 }
 
+have_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+ensure_xcode_clt() {
+  if xcode-select -p >/dev/null 2>&1; then
+    return 0
+  fi
+
+  echo "[glm-ocr-cli] installing Xcode Command Line Tools..."
+  xcode-select --install || true
+  echo "[glm-ocr-cli] finish the Xcode Command Line Tools install, then rerun this command." >&2
+  exit 1
+}
+
+ensure_homebrew() {
+  if have_cmd brew; then
+    return 0
+  fi
+
+  echo "[glm-ocr-cli] Homebrew not found. Installing Homebrew..."
+  NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+
+  need_cmd brew
+}
+
+ensure_brew_pkg() {
+  local formula="$1"
+  if brew list --versions "$formula" >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "[glm-ocr-cli] installing $formula via Homebrew..."
+  brew install "$formula"
+}
+
+ensure_macos_deps() {
+  ensure_xcode_clt
+  ensure_homebrew
+
+  ensure_brew_pkg git
+  ensure_brew_pkg uv
+  ensure_brew_pkg python@3.12
+  ensure_brew_pkg poppler
+
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+}
+
 backup_if_needed() {
   local path="$1"
   local target="$2"
@@ -34,12 +91,17 @@ backup_if_needed() {
   fi
 }
 
-need_cmd git
 need_cmd bash
+need_cmd curl
 
-if [[ "$(uname -s)" != "Darwin" ]]; then
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  ensure_macos_deps
+else
   echo "[glm-ocr-cli] warning: this project is primarily intended for macOS." >&2
+  need_cmd git
 fi
+
+need_cmd git
 
 mkdir -p "$(dirname "$INSTALL_DIR")"
 if [[ -d "$INSTALL_DIR/.git" ]]; then
@@ -64,6 +126,9 @@ backup_if_needed "$SKILL_LINK" "$INSTALL_DIR/skills/ocr"
 ln -s "$INSTALL_DIR/bin/ocr" "$CLI_LINK"
 ln -s "$INSTALL_DIR/skills/ocr" "$SKILL_LINK"
 chmod +x "$INSTALL_DIR/bin/ocr" "$INSTALL_DIR/install.sh"
+
+echo "[glm-ocr-cli] bootstrapping local OCR environments..."
+bash "$INSTALL_DIR/skills/ocr/scripts/setup.sh"
 
 echo "[glm-ocr-cli] installed"
 echo "[glm-ocr-cli] ref:   $REF"
