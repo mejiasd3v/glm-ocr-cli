@@ -10,30 +10,93 @@ done
 BIN_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 REPO_DIR="$(cd "$BIN_DIR/.." && pwd)"
 SKILL_DIR="$REPO_DIR/skills/ocr"
+COMPLETIONS_DIR="$REPO_DIR/completions"
 
 source "$SKILL_DIR/scripts/common.sh"
 
 usage() {
-  cat <<'EOF'
+  cat <<EOF
+GLM-OCR CLI
+
 Usage:
-  ocr <file-or-dir> [glmocr flags...]    Parse a PDF/image/directory
+  ocr <file-or-dir> [glmocr flags...]
   ocr parse <file-or-dir> [glmocr flags...]
-  ocr install                            Install local environments
-  ocr server                             Start a persistent background server (optional)
-  ocr status                             Show server/config status
-  ocr stop                               Stop background server
-  ocr logs                               Tail server logs
-  ocr doctor [sample-file]               Run a local self-test
-  ocr benchmark [--models ...]           Compare bf16 vs quantized models
+  ocr install
+  ocr server
+  ocr status
+  ocr config
+  ocr models
+  ocr stop
+  ocr logs
+  ocr doctor [sample-file]
+  ocr benchmark [--models ...]
+  ocr completion <bash|zsh>
+  ocr help
+  ocr version
+
+Core commands:
+  parse       OCR a PDF, image, or directory
+  doctor      Validate setup, server startup, and parser output
+  install     Bootstrap local environments
+  status      Show config, setup readiness, and server state
+  config      Show effective runtime settings
+  models      Show recommended model presets and env overrides
+  completion  Print shell completion script for bash or zsh
 
 Examples:
   ocr ./invoice.pdf --stdout
+  ocr ./scans --output ./ocr-results
   ocr parse ./receipt.jpg --stdout --no-save
-  ocr server   # optional; normal parse auto-starts and auto-stops the server
+  ocr doctor ./receipt.jpg
+  ocr completion zsh > ~/.zsh/completions/_ocr
+  GLMOCR_MODEL=mlx-community/GLM-OCR-8bit ocr ./invoice.pdf --stdout
+  GLMOCR_ENABLE_LAYOUT=1 ocr config
+
+Defaults:
+  host=${OCR_HOST}
+  port=${OCR_PORT}
+  model=${OCR_MODEL}
+  enable_layout=${OCR_ENABLE_LAYOUT}
+EOF
+}
+
+version() {
+  if command -v node >/dev/null 2>&1; then
+    node -p "require('$REPO_DIR/package.json').version"
+  else
+    echo "unknown"
+  fi
+}
+
+print_completion() {
+  local shell="${1:-}"
+  case "$shell" in
+    bash)
+      exec cat "$COMPLETIONS_DIR/ocr.bash"
+      ;;
+    zsh)
+      exec cat "$COMPLETIONS_DIR/_ocr"
+      ;;
+    *)
+      echo "Usage: ocr completion <bash|zsh>" >&2
+      exit 1
+      ;;
+  esac
+}
+
+unknown_command() {
+  local cmd="$1"
+  cat >&2 <<EOF
+[ocr] unknown command or missing input: $cmd
+
+Run one of:
+  ocr help
   ocr status
   ocr doctor
-  ocr benchmark --models bf16 8bit 4bit
+  ocr models
+  ocr <file> --stdout
 EOF
+  exit 1
 }
 
 if [[ $# -eq 0 ]]; then
@@ -54,6 +117,14 @@ case "$1" in
     shift
     ocr_print_status
     ;;
+  config|env)
+    shift
+    ocr_print_config
+    ;;
+  models)
+    shift
+    ocr_print_models
+    ;;
   stop)
     shift
     ocr_stop_server
@@ -73,6 +144,10 @@ case "$1" in
     ocr_ensure_setup
     exec "$OCR_SDK_VENV/bin/python" "$SKILL_DIR/scripts/benchmark_quantization.py" "$@"
     ;;
+  completion|completions)
+    shift
+    print_completion "${1:-}"
+    ;;
   parse)
     shift
     exec bash "$SKILL_DIR/scripts/parse.sh" "$@"
@@ -80,7 +155,16 @@ case "$1" in
   help|-h|--help)
     usage
     ;;
+  version|-v|--version)
+    version
+    ;;
+  -* )
+    unknown_command "$1"
+    ;;
   *)
-    exec bash "$SKILL_DIR/scripts/parse.sh" "$@"
+    if [[ -e "$1" ]]; then
+      exec bash "$SKILL_DIR/scripts/parse.sh" "$@"
+    fi
+    unknown_command "$1"
     ;;
 esac

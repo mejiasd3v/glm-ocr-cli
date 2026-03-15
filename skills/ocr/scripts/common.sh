@@ -2,6 +2,7 @@
 set -euo pipefail
 
 OCR_SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OCR_REPO_DIR="$(cd "$OCR_SKILL_DIR/../.." && pwd)"
 OCR_MLX_VENV="$OCR_SKILL_DIR/.venv-mlx"
 OCR_SDK_VENV="$OCR_SKILL_DIR/.venv-sdk"
 OCR_RUNTIME_DIR="$OCR_SKILL_DIR/.runtime"
@@ -38,8 +39,16 @@ ocr_ensure_runtime_dir() {
   mkdir -p "$OCR_RUNTIME_DIR"
 }
 
+ocr_mlx_ready() {
+  [[ -x "$OCR_MLX_VENV/bin/mlx_vlm.server" ]]
+}
+
+ocr_sdk_ready() {
+  [[ -x "$OCR_SDK_VENV/bin/glmocr" ]]
+}
+
 ocr_ensure_setup() {
-  if [[ -x "$OCR_MLX_VENV/bin/mlx_vlm.server" && -x "$OCR_SDK_VENV/bin/glmocr" ]]; then
+  if ocr_mlx_ready && ocr_sdk_ready; then
     return 0
   fi
 
@@ -124,23 +133,72 @@ ocr_stop_server() {
   rm -f "$OCR_SERVER_PID_FILE"
 }
 
-ocr_print_status() {
+ocr_print_config() {
   echo "skill_dir=$OCR_SKILL_DIR"
+  echo "repo_dir=$OCR_REPO_DIR"
+  echo "runtime_dir=$OCR_RUNTIME_DIR"
   echo "host=$OCR_HOST"
   echo "port=$OCR_PORT"
   echo "model=$OCR_MODEL"
   echo "enable_layout=$OCR_ENABLE_LAYOUT"
+  echo "health_timeout=$OCR_HEALTH_TIMEOUT"
   echo "mlx_env=$OCR_MLX_VENV"
   echo "sdk_env=$OCR_SDK_VENV"
   echo "server_log=$OCR_SERVER_LOG"
+}
+
+ocr_print_status() {
+  ocr_print_config
+
+  if ocr_mlx_ready; then
+    echo "mlx_env_ready=yes"
+  else
+    echo "mlx_env_ready=no"
+  fi
+
+  if ocr_sdk_ready; then
+    echo "sdk_env_ready=yes"
+  else
+    echo "sdk_env_ready=no"
+  fi
+
   if ocr_server_running; then
     echo "server=running"
   else
     echo "server=stopped"
   fi
+
   if [[ -f "$OCR_SERVER_PID_FILE" ]]; then
     echo "server_pid=$(cat "$OCR_SERVER_PID_FILE" 2>/dev/null || true)"
   fi
+
+  if ! ocr_mlx_ready || ! ocr_sdk_ready; then
+    echo "hint=run 'ocr install' to bootstrap local environments"
+  elif ! ocr_server_running; then
+    echo "hint=run 'ocr doctor' or parse a file with 'ocr <file> --stdout'"
+  fi
+}
+
+ocr_print_models() {
+  cat <<EOF
+recommended_model=mlx-community/GLM-OCR-bf16
+
+available_presets:
+- mlx-community/GLM-OCR-bf16   # recommended default; best quality/stability
+- mlx-community/GLM-OCR-8bit  # lighter memory usage; experimental
+- mlx-community/GLM-OCR-4bit  # smallest footprint; most experimental
+
+overrides:
+- GLMOCR_MODEL=<huggingface-model-id>
+- GLMOCR_PORT=<port>
+- GLMOCR_HOST=<host>
+- GLMOCR_ENABLE_LAYOUT=1
+
+examples:
+- GLMOCR_MODEL=mlx-community/GLM-OCR-8bit ocr ./file.pdf --stdout
+- GLMOCR_ENABLE_LAYOUT=1 ocr ./file.pdf --stdout
+- GLMOCR_PORT=8081 ocr server
+EOF
 }
 
 ocr_make_temp_config() {

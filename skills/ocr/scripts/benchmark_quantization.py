@@ -13,11 +13,11 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
-REPO_DIR = Path('/tmp/pi-github-repos/zai-org/GLM-OCR')
-SOURCE_DIR = REPO_DIR / 'examples' / 'source'
-REFERENCE_DIR = REPO_DIR / 'examples' / 'result'
+REPO_DIR = Path(os.environ.get('GLMOCR_BENCHMARK_REPO_DIR', '')).expanduser() if os.environ.get('GLMOCR_BENCHMARK_REPO_DIR') else None
+SOURCE_DIR = None if REPO_DIR is None else REPO_DIR / 'examples' / 'source'
+REFERENCE_DIR = None if REPO_DIR is None else REPO_DIR / 'examples' / 'result'
 PARSE_SH = SKILL_DIR / 'scripts' / 'parse.sh'
-OCR_BIN = Path('/Users/mejiasdev/.local/bin/ocr')
+OCR_BIN = Path(os.environ.get('GLMOCR_BIN', str(SKILL_DIR.parents[1] / 'bin' / 'ocr'))).expanduser()
 DEFAULT_CASES = ['code', 'page', 'paper', 'table', 'handwritten', 'seal']
 MODEL_ALIASES = {
     'bf16': 'mlx-community/GLM-OCR-bf16',
@@ -90,6 +90,18 @@ class ModelSummary:
             'mean_cer_norm': round(statistics.mean(cer_norm), 4) if cer_norm else None,
             'max_cer_norm': round(max(cer_norm), 4) if cer_norm else None,
         }
+
+
+def require_benchmark_repo() -> Path:
+    if REPO_DIR is None or SOURCE_DIR is None or REFERENCE_DIR is None:
+        raise SystemExit(
+            'Set GLMOCR_BENCHMARK_REPO_DIR to a local GLM-OCR checkout containing examples/source and examples/result.'
+        )
+    if not SOURCE_DIR.exists() or not REFERENCE_DIR.exists():
+        raise SystemExit(
+            f'Invalid GLMOCR_BENCHMARK_REPO_DIR: {REPO_DIR} (missing examples/source or examples/result)'
+        )
+    return REPO_DIR
 
 
 def resolve_source(case: str) -> Path:
@@ -190,10 +202,10 @@ def sanitize_model_name(model: str) -> str:
     return model.replace('/', '__')
 
 
-def write_report(out_dir: Path, summaries: list[ModelSummary]) -> None:
+def write_report(out_dir: Path, summaries: list[ModelSummary], benchmark_repo_dir: Path) -> None:
     data = {
         'generated_at': time.strftime('%Y-%m-%d %H:%M:%S'),
-        'repo_dir': str(REPO_DIR),
+        'repo_dir': str(benchmark_repo_dir),
         'summaries': [
             {
                 'aggregate': s.aggregate(),
@@ -205,6 +217,8 @@ def write_report(out_dir: Path, summaries: list[ModelSummary]) -> None:
     (out_dir / 'results.json').write_text(json.dumps(data, indent=2), encoding='utf-8')
 
     lines = ['# GLM-OCR Quantization Benchmark', '']
+    lines.append(f'- benchmark_repo_dir: `{benchmark_repo_dir}`')
+    lines.append('')
     lines.append('| Model | Success | Fail | Mean sec | Median sec | Mean CER raw | Mean CER norm | Max CER norm |')
     lines.append('|---|---:|---:|---:|---:|---:|---:|---:|')
     for s in summaries:
@@ -235,6 +249,8 @@ def main() -> int:
     parser.add_argument('--port', default='8080')
     args = parser.parse_args()
 
+    benchmark_repo_dir = require_benchmark_repo()
+
     out_dir = Path(args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -244,7 +260,7 @@ def main() -> int:
         print(f'== Benchmarking {model} ==', flush=True)
         summaries.append(benchmark_model(model, args.cases, out_dir, args.port))
 
-    write_report(out_dir, summaries)
+    write_report(out_dir, summaries, benchmark_repo_dir)
     print(f'Wrote report to {out_dir}')
     return 0
 

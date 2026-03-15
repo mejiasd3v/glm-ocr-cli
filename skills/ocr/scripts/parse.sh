@@ -3,29 +3,57 @@ set -euo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
+usage() {
+  cat <<EOF >&2
+Usage:
+  ocr <pdf-or-image-or-dir> [glmocr flags...]
+  ocr parse <pdf-or-image-or-dir> [glmocr flags...]
+
+Examples:
+  ocr ./invoice.pdf --stdout
+  ocr ./receipt.jpg --stdout --no-save
+  ocr ./scans --output ./ocr-results
+  GLMOCR_ENABLE_LAYOUT=1 ocr ./invoice.pdf --stdout
+EOF
+}
+
 if [[ $# -lt 1 ]]; then
-  echo "Usage: ocr <pdf-or-image-or-dir> [glmocr flags...]" >&2
-  echo "   or: bash $OCR_SKILL_DIR/scripts/parse.sh <pdf-or-image-or-dir> [glmocr flags...]" >&2
+  usage
+  exit 1
+fi
+
+case "${1:-}" in
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  -v|--version|version)
+    if command -v node >/dev/null 2>&1; then
+      node -p "require('$OCR_SKILL_DIR/../../package.json').version"
+    else
+      echo "unknown"
+    fi
+    exit 0
+    ;;
+esac
+
+INPUT="$1"
+shift
+
+if [[ ! -e "$INPUT" ]]; then
+  echo "[ocr] input not found: $INPUT" >&2
   exit 1
 fi
 
 ocr_ensure_setup
 
 SDK_BIN="$OCR_SDK_VENV/bin/glmocr"
-INPUT="$1"
-shift
-
 STARTED_SERVER=0
 if ocr_server_running; then
   echo "[ocr] reusing running server at ${OCR_HOST}:${OCR_PORT}" >&2
 else
   ocr_start_server_bg
   STARTED_SERVER=1
-fi
-
-if [[ ! -e "$INPUT" ]]; then
-  echo "Input not found: $INPUT" >&2
-  exit 1
 fi
 
 HAS_CONFIG=0

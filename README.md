@@ -49,6 +49,7 @@ It also:
 - clones the repo to `~/.local/share/glm-ocr-cli`
 - symlinks the CLI to `~/.local/bin/ocr`
 - symlinks the skill to `~/.agents/skills/ocr`
+- installs bash and zsh completion links
 - bootstraps the local OCR virtualenvs
 
 Then verify with:
@@ -84,6 +85,17 @@ Ensure `~/.local/bin` is on your `PATH`, then bootstrap dependencies:
 ```bash
 ocr install
 ocr doctor
+```
+
+Optional shell completions:
+
+```bash
+# bash
+source ~/.local/share/bash-completion/completions/ocr
+
+# zsh
+fpath=(~/.zsh/completions $fpath)
+autoload -Uz compinit && compinit
 ```
 
 ## Features
@@ -178,10 +190,15 @@ ocr parse <file-or-dir> [glmocr flags...]
 ocr install
 ocr doctor [sample-file]
 ocr status
+ocr config
+ocr models
 ocr logs
 ocr stop
 ocr server
+ocr version
 ocr benchmark --models bf16 8bit 4bit
+ocr completion bash
+ocr completion zsh
 ```
 
 ## Defaults
@@ -197,6 +214,13 @@ ocr benchmark --models bf16 8bit 4bit
 GLMOCR_PORT=8081 ocr ./file.pdf --stdout
 GLMOCR_MODEL=mlx-community/GLM-OCR-8bit ocr ./file.pdf --stdout
 GLMOCR_ENABLE_LAYOUT=1 ocr ./file.pdf --stdout
+```
+
+Inspect the effective runtime config and model presets:
+
+```bash
+ocr config
+ocr models
 ```
 
 ## Output

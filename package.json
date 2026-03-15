@@ -1,6 +1,6 @@
 {
   "name": "glm-ocr-cli",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "private": true,
   "description": "Local OCR CLI and Pi skill for PDFs and images on Apple Silicon using GLM-OCR.",
   "license": "MIT",
@@ -21,7 +21,7 @@
     "agent-skill"
   ],
   "scripts": {
-    "check": "bash -n install.sh bin/ocr skills/ocr/scripts/*.sh && node scripts/validate-layout.mjs",
+    "check": "bash -n install.sh bin/ocr completions/ocr.bash skills/ocr/scripts/*.sh && (command -v zsh >/dev/null 2>&1 && zsh -n completions/_ocr || true) && node scripts/validate-layout.mjs",
     "test:install": "TMP_HOME=$(mktemp -d) && HOME=$TMP_HOME bash ./install.sh && HOME=$TMP_HOME $TMP_HOME/.local/bin/ocr --help >/dev/null && rm -rf $TMP_HOME"
   }
 }

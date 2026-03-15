@@ -3,12 +3,57 @@ set -euo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
-SAMPLE_DEFAULT="/tmp/pi-github-repos/zai-org/GLM-OCR/examples/source/code.png"
-SAMPLE="${1:-$SAMPLE_DEFAULT}"
+find_default_sample() {
+  local candidates=(
+    "$OCR_REPO_DIR/examples/source/code.png"
+    "$OCR_SKILL_DIR/examples/code.png"
+    "$HOME/.cache/glm-ocr-cli/code.png"
+  )
 
-if [[ ! -e "$SAMPLE" ]]; then
-  echo "[ocr] self-test input not found: $SAMPLE" >&2
-  echo "[ocr] pass a file path, e.g. ocr doctor /path/to/file.png" >&2
+  local sample
+  for sample in "${candidates[@]}"; do
+    if [[ -e "$sample" ]]; then
+      echo "$sample"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+usage() {
+  cat <<EOF >&2
+Usage:
+  ocr doctor [sample-file]
+
+Examples:
+  ocr doctor
+  ocr doctor ./receipt.jpg
+
+Notes:
+  - without a sample file, doctor tries a bundled/local demo image if available
+  - doctor validates environment setup, server startup, and parser output
+EOF
+}
+
+case "${1:-}" in
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+esac
+
+if [[ $# -gt 0 ]]; then
+  SAMPLE="$1"
+else
+  SAMPLE="$(find_default_sample || true)"
+fi
+
+if [[ -z "${SAMPLE:-}" || ! -e "$SAMPLE" ]]; then
+  echo "[ocr] self-test input not found." >&2
+  echo "[ocr] pass a sample file explicitly, for example:" >&2
+  echo "[ocr]   ocr doctor /path/to/file.png" >&2
+  echo "[ocr]   ocr doctor /path/to/file.pdf" >&2
   exit 1
 fi
 

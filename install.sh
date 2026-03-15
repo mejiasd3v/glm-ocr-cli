@@ -6,6 +6,8 @@ REF="${GLMOCR_VERSION:-${GLMOCR_BRANCH:-main}}"
 INSTALL_DIR="${GLMOCR_INSTALL_DIR:-$HOME/.local/share/glm-ocr-cli}"
 CLI_LINK="${GLMOCR_CLI_LINK:-$HOME/.local/bin/ocr}"
 SKILL_LINK="${GLMOCR_SKILL_LINK:-$HOME/.agents/skills/ocr}"
+BASH_COMPLETION_LINK="${GLMOCR_BASH_COMPLETION_LINK:-$HOME/.local/share/bash-completion/completions/ocr}"
+ZSH_COMPLETION_LINK="${GLMOCR_ZSH_COMPLETION_LINK:-$HOME/.zsh/completions/_ocr}"
 
 need_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -91,6 +93,14 @@ backup_if_needed() {
   fi
 }
 
+install_completion_link() {
+  local target="$1"
+  local link_path="$2"
+  mkdir -p "$(dirname "$link_path")"
+  backup_if_needed "$link_path" "$target"
+  ln -s "$target" "$link_path"
+}
+
 need_cmd bash
 need_cmd curl
 
@@ -125,6 +135,8 @@ backup_if_needed "$SKILL_LINK" "$INSTALL_DIR/skills/ocr"
 
 ln -s "$INSTALL_DIR/bin/ocr" "$CLI_LINK"
 ln -s "$INSTALL_DIR/skills/ocr" "$SKILL_LINK"
+install_completion_link "$INSTALL_DIR/completions/ocr.bash" "$BASH_COMPLETION_LINK"
+install_completion_link "$INSTALL_DIR/completions/_ocr" "$ZSH_COMPLETION_LINK"
 chmod +x "$INSTALL_DIR/bin/ocr" "$INSTALL_DIR/install.sh"
 
 echo "[glm-ocr-cli] bootstrapping local OCR environments..."
@@ -135,6 +147,8 @@ echo "[glm-ocr-cli] ref:   $REF"
 echo "[glm-ocr-cli] repo:  $INSTALL_DIR"
 echo "[glm-ocr-cli] cli:   $CLI_LINK"
 echo "[glm-ocr-cli] skill: $SKILL_LINK"
+echo "[glm-ocr-cli] bash completion: $BASH_COMPLETION_LINK"
+echo "[glm-ocr-cli] zsh completion:  $ZSH_COMPLETION_LINK"
 echo "[glm-ocr-cli] next:  ocr doctor"
 
 echo
@@ -142,3 +156,7 @@ if [[ ":${PATH}:" != *":$HOME/.local/bin:"* ]]; then
   echo "[glm-ocr-cli] note: $HOME/.local/bin is not currently on PATH"
   echo "[glm-ocr-cli] add it to your shell profile before using 'ocr' directly"
 fi
+
+echo "[glm-ocr-cli] completion tip:"
+echo "[glm-ocr-cli]   bash: source $BASH_COMPLETION_LINK"
+echo "[glm-ocr-cli]   zsh:  add '$HOME/.zsh/completions' to fpath, then run 'autoload -Uz compinit && compinit'"

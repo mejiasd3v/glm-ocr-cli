@@ -1,0 +1,49 @@
+#compdef ocr
+
+local -a commands
+commands=(
+  'parse:OCR a PDF, image, or directory'
+  'install:Bootstrap local environments'
+  'server:Start a persistent background server'
+  'status:Show config, setup readiness, and server state'
+  'config:Show effective runtime settings'
+  'env:Alias for config'
+  'models:Show recommended model presets'
+  'stop:Stop background server'
+  'logs:Tail server logs'
+  'doctor:Validate setup, server startup, and parser output'
+  'benchmark:Compare bf16 vs quantized models'
+  'version:Show CLI version'
+  'completion:Print shell completion script'
+  'help:Show help'
+)
+
+_arguments -C \
+  '1:command:->cmds' \
+  '*::arg:->args'
+
+case $state in
+  cmds)
+    _describe -t commands 'ocr command' commands
+    ;;
+  args)
+    case "$words[2]" in
+      parse|doctor)
+        _files
+        ;;
+      benchmark)
+        _arguments \
+          '--models[Model presets]:model:(bf16 8bit 6bit 5bit 4bit)' \
+          '--cases[Benchmark cases]:case:' \
+          '--out-dir[Output directory]:directory:_files -/' \
+          '--port[Server port]:port:'
+        ;;
+      completion)
+        _values 'shell' bash zsh
+        ;;
+      *)
+        _files
+        ;;
+    esac
+    ;;
+esac
