@@ -80,6 +80,7 @@ skills/ocr/             Skill package
 skills/ocr/config/      Example config
 skills/ocr/scripts/     Setup, parse, doctor, benchmark helpers
 skills/ocr/SKILL.md     Pi skill definition
+package.json            Repo metadata + validation scripts
 README.md               Project docs
 LICENSE                 MIT license
 ```
@@ -204,6 +205,15 @@ For each file, the parser can produce:
 - `8bit` is a lighter experimental option.
 - Layout is disabled by default because the local SDK layout path was unstable in testing.
 - Run `ocr doctor` after changes to verify the full local path.
+
+## Development
+
+Basic checks:
+
+```bash
+npm run check
+npm run test:install
+```
 
 ## Acknowledgements
 

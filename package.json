@@ -1,0 +1,27 @@
+{
+  "name": "glm-ocr-cli",
+  "version": "0.1.1",
+  "private": true,
+  "description": "Local OCR CLI and Pi skill for PDFs and images on Apple Silicon using GLM-OCR.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mejiasd3v/glm-ocr-cli.git"
+  },
+  "homepage": "https://github.com/mejiasd3v/glm-ocr-cli",
+  "bugs": {
+    "url": "https://github.com/mejiasd3v/glm-ocr-cli/issues"
+  },
+  "keywords": [
+    "ocr",
+    "glm-ocr",
+    "apple-silicon",
+    "mlx",
+    "pdf",
+    "agent-skill"
+  ],
+  "scripts": {
+    "check": "bash -n install.sh bin/ocr skills/ocr/scripts/*.sh && node scripts/validate-layout.mjs",
+    "test:install": "TMP_HOME=$(mktemp -d) && HOME=$TMP_HOME bash ./install.sh && HOME=$TMP_HOME $TMP_HOME/.local/bin/ocr --help >/dev/null && rm -rf $TMP_HOME"
+  }
+}

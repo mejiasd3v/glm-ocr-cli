@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate repo layout and shell scripts
+        run: npm run check
+
+      - name: Test installer bootstrap locally
+        run: npm run test:install
+
+      - name: Verify skills.sh discovery from local repo
+        run: npx -y skills add . --list
